@@ -1154,7 +1154,7 @@
         
         <div class="card card-chart card-sales">
             <div class="chart-header">
-              <p class="chart-title">Sales Overview</p>
+              <p class="chart-title">Ratios</p>
               <p class="chart-subtitle text-success" id="sales-subtitle"></p>
             </div>
             <canvas id="salesChart"></canvas>
@@ -1323,14 +1323,14 @@
     });
 
     const salesChart = new Chart(document.getElementById('salesChart'), {
-      type: 'line',
+      type: 'bar',
       data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        labels: ['Current Ratio', 'ROA', 'ROE', 'Debt to Equity', 'Global Score'],
         datasets: [{
-          label: 'Sales',
-          data: [100, 120, 150, 170, 180, 200, 220, 210, 230, 250, 270, 300],
+          label: 'Ratio',
+          data: [65, 90, 85, 5, 75],
           fill: true,
-          backgroundColor: 'rgba(67,24,255,0.2)',
+          backgroundColor: 'rgb(165, 42, 42,0.7)',
           borderColor: '#4318FF',
           tension: 0.4
         }]
@@ -1338,7 +1338,7 @@
       options: {
         plugins: { legend: { display: false } },
         scales: {
-          y: { beginAtZero: true, max: 500, grid: { color: 'rgba(255,255,255,0.1)' } },
+          y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' } },
           x: { grid: { display: false } }
         }
       }
