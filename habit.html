@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outfit Generator</title>
+  <style>
+    body {
+      margin: 0;
+      background: #1a1a;
+      color: #e0e0e0;
+      font-family: 'Orbitron', sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(45deg, #00deg, #ff00ff);
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      display: flex;
+      flex-grow: 1;
+      padding: 20px;
+    }
+    .outfit-preview {
+      width: 60%;
+      height: 500px;
+      background: #2a2a2a;
+      border: 2px solid #00ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+    .carousel {
+      width: 40%;
+      max-height: 500px;
+      overflow-y: auto;
+      padding: 10px;
+      background: #2a2a2a;
+    }
+    .clothing-item {
+      display: flex;
+      align-items: space-between;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #3a3a3a;
+      border: 1px solid #00ff;
+      cursor: move;
+    }
+    .clothing-item img {
+      width: 50pxpx;
+      height: auto;
+    }
+    .dropzone {
+      width: 100%;
+      height: 100px;
+      border: 2px dashed #00ff;
+      text-align: center;
+      line-height: 100px;
+      margin-bottom: 20px;
+    }
+    button {
+      background: linear-gradient(45deg, #00ff, #00b7eb);
+      border: none;
+      padding: 10px 20px;
+      color: #fff;
+      font-family: 'Orbitron',', sans-serif;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    @media (max-width: 768px) {
+      main {
+        flex-direction: column;
+      }
+      .outfit-preview, .carousel {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Outfit Generator</h1>
+    <button onclick="showAddClothingForm()">Add Clothing</button>
+    <button onclick="generateOutfit()">Generate Outfit</button>
+    <button onclick="exportToJSON()">Export JSON</button>
+    <input type="file" id="importFile" accept=".json" onchange="importFromJSON()">
+    <input type="text" id="city" placeholder="Enter city for weather">
+    <button onclick="fetchWeather()">Get Weather</button>
+  </header>
+  <main>
+    <div class="outfit-preview">
+      <div class="dropzone" ondragover="allowDrop(event)" ondrop="drop(event)">Drop clothes here</div>
+      <canvas id="outfitCanvas" width="300" height="500"></canvas>
+    </div>
+    <div class="carousel" id="clothingList"></div>
+  </main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+  <script>
+    let wardrobe = { clothes: [], outfits: [] };
+    let currentOutfit = [];
+    let weather = { temp: 20, condition: 'clear' };
+
+    // Load from URL if data exists
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('data')) {
+      const compressed = urlParams.get('data');
+      const decompressed = LZString.decompressFromBase64(compressed);
+      wardrobe = JSON.parse(decompressed);
+      updateClothingList();
+    }
+
+    // Add clothing form (prompt for simplicity)
+    function showAddClothingForm() {
+      const type = prompt('Clothing type (e.g., tshirt, pants):');
+      const style = prompt('Style (casual, streetwear, classe):');
+      const season = prompt('Season (summer, winter, all):');
+      const image = prompt('Image URL or base64 (for testing, use placeholder):') || 'https://via.placeholder.com/50';
+      if (type && style && season) {
+        wardrobe.clothes.push({
+          id: Date.now(),
+          type,
+          style,
+          season,
+          image
+        });
+        updateClothingList();
+        saveToURL();
+      }
+    }
+
+    // Update clothing list in carousel
+    function updateClothingList() {
+      const list = document.getElementById('clothingList');
+      list.innerHTML = '';
+      wardrobe.clothes.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'clothing-item';
+        div.draggable = true;
+        div.dataset.id = item.id;
+        div.innerHTML = `
+          <img src="${item.image}" alt="${item.type}">
+          <span>${item.type} (${item.style}, ${item.season})</span>
+        `;
+        div.ondragstart = (ev) => ev.dataTransfer.setData('text/plain', item.id);
+        list.appendChild(div);
+      });
+    }
+
+    // Drag and drop
+    function allowDrop(ev) {
+      ev.preventDefault();
+    }
+    function drop(ev) {
+      ev.preventDefault();
+      const id = ev.dataTransfer.getData('text');
+      const item = wardrobe.clothes.find(c => c.id == id);
+      if (item) {
+        currentOutfit.push(item);
+        renderOutfit();
+      }
+    }
+
+    // Render outfit on canvas
+    function renderOutfit() {
+      const canvas = document.getElementById('outfitCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      currentOutfit.forEach((item, index) => {
+        const img = new Image();
+        img.src = item.image;
+        img.onload = () => {
+          ctx.drawImage(img, 50, 50 + index * 100, 200, 100);
+        };
+      });
+    }
+
+    // Generate outfit based on weather and style
+    function generateOutfit() {
+      const style = prompt('Select style (casual, streetwear, classe):') || 'casual';
+      const filteredClothes = wardrobe.clothes.filter(c =>
+        c.style === style && isSeasonCompatible(c.season, weather.temp)
+      );
+      const types = ['tshirt', 'pants', 'shoes'];
+      currentOutfit = types.map(type => {
+        const items = filteredClothes.filter(c => c.type === type);
+        return items[Math.floor(Math.random() * items.length)];
+      }).filter(Boolean);
+      renderOutfit();
+    }
+
+    function isSeasonCompatible(season, temp) {
+      if (season === 'all') return true;
+      if (season === 'summer' && temp >= 15) return true;
+      if (season === 'winter' && temp < 15) return true;
+      return false;
+    }
+
+    // Fetch weather
+    async function fetchWeather() {
+      const city = document.getElementById('city').value || 'Paris';
+      try {
+        const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=YOUR_API_KEY&units=metric`);
+        const data = await res.json();
+        weather = { temp: data.main.temp, condition: data.weather[0].main };
+        localStorage.setItem('weather', JSON.stringify({ ...weather, timestamp: Date.now() }));
+        alert(`Weather: ${weather.temp}°C, ${weather.condition}`);
+      } catch (e) {
+        const cached = localStorage.getItem('weather');
+        if (cached) {
+          const { temp, condition, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < 3600000) {
+            weather = { temp, condition };
+            alert(`Using cached weather: ${temp}°C, ${condition}`);
+          }
+        }
+      }
+    }
+
+    // Save to URL
+    function saveToURL() {
+      const json = JSON.stringify(wardrobe);
+      const compressed = LZString.compressToBase64(json);
+      if (compressed.length < 2000000) {
+        window.history.pushState({}, '', `?data=${compressed}`);
+      } else {
+        alert('Data too large for URL, use JSON export instead.');
+      }
+    }
+
+    // Export to JSON
+    function exportToJSON() {
+      const dataStr = JSON.stringify(wardrobe);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'wardrobe.json';
+      link.click();
+    }
+
+    // Import from JSON
+    function importFromJSON() {
+      const file = document.getElementById('importFile').files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          wardrobe = JSON.parse(e.target.result);
+          updateClothingList();
+          saveToURL();
+        };
+        reader.readAsText(file);
+      }
+    }
+
+    // Initialize
+    updateClothingList();
+  </script>
+</body>
+</html>

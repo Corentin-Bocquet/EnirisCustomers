@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vision UI Dashboard</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+  <style>
+    :root {
+      --color-bg: #1F2E5A;
+      --color-primary: #ffffff;
+      --color-info: #0075FF;
+      --color-success: #01B574;
+      --color-warning: #FFB547;
+      --color-error: #E31A1A;
+      --color-light: #E9ECEF;
+      --color-text: #FFFFFF;
+      --color-text-muted: #A0AEC0;
+      --font-family: "Plus Jakarta Sans", Arial, sans-serif;
+      --spacing: 24px;
+      --card-radius: 24px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.3);
+      --gradient-blue: linear-gradient(45deg, hsl(223, 40%, 20%), hsl(208, 40%, 20%));
+      --gradient-purple: linear-gradient(45deg, hsl(283, 50%, 25%), hsl(268, 50%, 25%));
+      --gradient-orange: linear-gradient(45deg, hsl(43, 60%, 30%), hsl(28, 60%, 30%));
+      --gradient-green: linear-gradient(45deg, hsl(123, 50%, 20%), hsl(108, 50%, 20%));
+      --gradient-progress: linear-gradient(45deg, #4318FF, #007bff);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: var(--color-bg);
+      color: var(--color-text);
+      min-height: 100vh;
+    }
+
+    .content {
+      padding: var(--spacing);
+      width: 100%;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: rgba(6,11,40,0.8);
+      backdrop-filter: blur(10px);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+    }
+
+    .breadcrumb {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+    }
+
+    .breadcrumb span {
+      font-weight: 600;
+      color: var(--color-text);
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .search-bar {
+      background: rgba(255,255,255,0.1);
+      border-radius: var(--card-radius);
+      padding: 0.25rem 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-bar .material-icons {
+      font-size: 1rem;
+      color: var(--color-text-muted);
+      margin-right: 0.5rem;
+    }
+
+    .search-bar input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--color-text);
+      font-size: 0.875rem;
+      width: 150px;
+    }
+
+    .search-bar input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .btn-signin {
+      background: var(--color-primary);
+      color: var(--color-text);
+      padding: 0.5rem 1rem;
+      border-radius: var(--card-radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .btn-signin:hover {
+      background: #594AFF;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      font-size: 1rem;
+      margin-top: 20%;
+      margin-left: 3%;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      color: var(--color-text);
+      transform: scale(1.1);
+    }
+
+    .card {
+      background: linear-gradient(rgba(6,11,40,0.94), rgba(10,14,35,0.49));
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      padding: 1rem;
+      color: var(--color-text);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .company-carousel {
+      position: relative;
+      margin-bottom: var(--spacing);
+      overflow: hidden;
+    }
+
+    .carousel-container {
+      display: flex;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 0.5rem 0;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .carousel-container::-webkit-scrollbar {
+      display: none;
+    }
+
+    .carousel-item {
+      flex: 0 0 33.33%;
+      max-width: 33.33%;
+      padding: 0 0.5rem;
+      box-sizing: border-box;
+    }
+
+    .carousel-item button {
+      width: 100%;
+      height: 80px;
+      background: linear-gradient(rgba(6,11,40,0.94), rgba(10,14,35,0.49));
+      border-radius: var(--card-radius);
+      border: none;
+      color: var(--color-text);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      backdrop-filter: blur(0.75em);
+      -webkit-backdrop-filter: blur(0.75em);
+      box-shadow: var(--shadow);
+      transition: all 0.3s ease;
+    }
+
+    .carousel-item button:hover {
+      transform: translateY(-2px);
+      background: linear-gradient(rgba(10,14,35,0.94), rgba(20,28,70,0.49));
+    }
+
+    .carousel-item.active button {
+      border: 2px solid var(--color-primary);
+      background: linear-gradient(rgba(67,24,255,0.2), rgba(67,24,255,0.4));
+    }
+
+    .carousel-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 0.5rem;
+    }
+
+    .carousel-nav button {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      color: var(--color-text);
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .carousel-nav button:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .carousel-nav .nav-left { left: 0; }
+    .carousel-nav .nav-right { right: 0; }
+
+    .stats-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing);
+      margin-bottom: var(--spacing);
+    }
+
+    .card-kpi {
+      position: relative;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      padding-top: 10%;
+    }
+
+    .card-content {
+      margin-left: 4.5rem;
+    }
+
+    .card-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom: 0.25rem;
+      margin-left: 10%;
+    }
+
+    .card-title2 {
+      font-size: 1rem;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      margin-bottom:1rem;
+      margin-top: 0.3rem;
+      margin-left: 0%;
+    }
+
+    .card-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+      margin-left: 10%;
+    }
+
+    .card-change {
+      font-size: 0.75rem;
+      margin-left: 0.5rem;
+    }
+
+    .card-change.positive { color: var(--color-success); }
+    .card-change.negative { color: var(--color-error); }
+
+    .icon-btns {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      display: grid;
+      grid-gap: 0.8em;
+      grid-template-columns: 1fr;
+    }
+
+    .icon-btn {
+      background-color: transparent;
+      outline: none;
+      position: relative;
+      width: 3.8em;
+      height: 3.8em;
+      perspective: 24em;
+      transform-style: preserve-3d;
+      -webkit-tap-highlight-color: transparent;
+      padding-right: 40%;
+    }
+
+    .icon-btn__back,
+    .icon-btn__front,
+    .icon-btn__label {
+      transition: opacity 0.3s cubic-bezier(0.83, 0, 0.17, 1),
+                transform 0.3s cubic-bezier(0.83, 0, 0.17, 1);
+    }
+
+    .icon-btn__back,
+    .icon-btn__front {
+      border-radius: 1em;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .icon-btn__back {
+      box-shadow: 0.4em -0.4em 0.6em hsla(223, 10%, 10%, 0.15);
+      transform: rotate(15deg);
+      transform-origin: 100% 100%;
+    }
+
+    .icon-btn__front {
+      background-color: hsla(0, 0%, 100%, 0.15);
+      box-shadow: 0 0 0 0.1em hsla(0, 0%, 100%, 0.3) inset;
+      backdrop-filter: blur(0.75em);
+      -webkit-backdrop-filter: blur(0.75em);
+      display: flex;
+      transform-origin: 80% 50%;
+    }
+
+    .icon-btn__icon {
+      margin: auto;
+      width: 1.3em;
+      height: 1.3em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--color-text);
+    }
+
+    .icon-btn__label {
+      font-size: 0.875em;
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.8;
+      opacity: 0;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      left: 0;
+      transform: translateY(0);
+      color: var(--color-text);
+    }
+
+    .icon-btn:hover .icon-btn__back {
+      transform: rotate(25deg) translate3d(-0.4em, -0.4em, 0.4em);
+    }
+
+    .icon-btn:hover .icon-btn__front {
+      transform: translateZ(1.8em);
+    }
+
+    .icon-btn:hover .icon-btn__label {
+      opacity: 1;
+      transform: translateY(15%);
+    }
+
+    .card-money .icon-btn__back { background: var(--gradient-green); }
+    .card-users .icon-btn__back { background: var(--gradient-blue); }
+    .card-clients .icon-btn__back { background: var(--gradient-orange); }
+    .card-sales .icon-btn__back { background: var(--gradient-purple); }
+
+    .cards-row {
+      display: flex;
+      gap: var(--spacing);
+      margin-bottom: var(--spacing);
+    }
+
+    .card-welcome {
+      flex: 2;
+      position: relative;
+      overflow: hidden;
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-image: url(img/BELGIAN.png);
+        background-size: cover;
+    }
+
+    .welcome-text h3 {
+      font-size: 1.5rem;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-text .subtitle {
+      font-size: 1rem;
+      color: var(--color-light);
+      margin-bottom: 1rem;
+    }
+
+    .assistant-invite {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+    }
+
+    .record-trigger {
+      color: var(--color-info);
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .record-trigger:hover {
+      text-decoration: underline;
+    }
+
+    .cards-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card-satisfaction, .card-referral {
+      min-height: 150px;
+    }
+
+    .card-satisfaction {
+      text-align: center;
+    }
+
+    .card-subtitle {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .chart-donut {
+      position: relative;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 0.5rem;
+    }
+
+    .chart-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .chart-center .emoji {
+      font-size: 1.25rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    .chart-center .percent {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-success);
+    }
+
+    .chart-labels {
+      position: absolute;
+      width: 100%;
+      top: 50%;
+      left: 0;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .chart-note {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .card-referral {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .referral-stats p {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .referral-stats strong {
+      font-size: 1rem;
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    .referral-gauge {
+      text-align: center;
+    }
+
+    .gauge-circle {
+      position: relative;
+      width: 60px;
+      height: 60px;
+      margin: 0 auto;
+    }
+
+    .gauge-center span {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--color-warning);
+    }
+
+    .gauge-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .charts-row {
+      display: flex;
+      gap: var(--spacing);
+      margin-bottom: var(--spacing);
+    }
+
+    .card-sales {
+      flex: 2;
+      
+    }
+
+    .card-active-users {
+      flex: 3;
+      min-height: 300px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .chart-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .chart-subtitle {
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .text-success {
+      color: var(--color-success);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-row-gap: 0.5rem;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .metric-value {
+      font-size: 0.875rem;
+      color: var(--color-text);
+      font-weight: 600;
+    }
+
+    .tables-row {
+      display: flex;
+      gap: var(--spacing);
+    }
+
+    .card-projects, .card-orders {
+      flex: 1;
+      min-height: 300px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .table-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .table-count {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+      overflow-x: auto;
+      display: block;
+    }
+
+    th {
+      text-align: left;
+      color: var(--color-text-muted);
+      font-weight: 700;
+      padding-bottom: 0.5rem;
+      white-space: nowrap;
+    }
+
+    td {
+      color: var(--color-text);
+      padding: 0.5rem 0;
+      vertical-align: middle;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      white-space: nowrap;
+    }
+
+    td strong {
+      font-weight: 600;
+    }
+
+    .completion-bar {
+      display: inline-block;
+      background: var(--color-success);
+      height: 6px;
+      width: calc(var(--pct) * 1%);
+      max-width: 50px;
+      border-radius: 3px;
+      margin-right: 4px;
+      vertical-align: middle;
+    }
+
+    .orders-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .orders-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .orders-list li:first-child {
+      border-top: none;
+    }
+
+    .order-name {
+      font-size: 0.75rem;
+      color: var(--color-text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 70%;
+    }
+
+    .order-date {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      font-weight: 300;
+      white-space: nowrap;
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      padding: 1rem 0;
+    }
+
+    .footer a {
+      color: var(--color-text);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--color-text);
+    }
+
+    /* Circular Progress Bar Styles */
+    .progress-circle1 {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .progress-circle1 svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-circle1 .bg-circle1 {
+      fill: none;
+      stroke: #2D3748;
+      stroke-width: 10;
+    }
+
+    .progress-circle1 .progress-ring1 {
+      fill: none;
+      stroke: url(#progressGradient);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: calc(283 - (283 * var(--percent1)) / 100);
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    @keyframes progressAnim1 {
+      from { stroke-dashoffset: 283; }
+      to { stroke-dashoffset: calc(283 - (283 * var(--percent1)) / 100); }
+    }
+
+    .progress-circle1 .progress-ring1 {
+      animation: progressAnim1 1s ease forwards;
+    }
+
+    .progress-circle2 {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .progress-circle2 svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-circle2 .bg-circle2 {
+      fill: none;
+      stroke: #2D3748;
+      stroke-width: 10;
+    }
+
+    .progress-circle2 .progress-ring2 {
+      fill: none;
+      stroke: url(#progressGradient);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: calc(283 - (283 * var(--percent2)) / 100);
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    @keyframes progressAnim2 {
+      from { stroke-dashoffset: 283; }
+      to { stroke-dashoffset: calc(283 - (283 * var(--percent2)) / 100); }
+    }
+
+    .progress-circle2 .progress-ring2 {
+      animation: progressAnim2 1s ease forwards;
+    }
+
+    .progress-circle3 {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .progress-circle3 svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-circle3 .bg-circle3 {
+      fill: none;
+      stroke: #2D3748;
+      stroke-width: 10;
+    }
+
+    .progress-circle3 .progress-ring3 {
+      fill: none;
+      stroke: url(#progressGradient);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: calc(283 - (283 * var(--percent3)) / 100);
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    @keyframes progressAnim3 {
+      from { stroke-dashoffset: 283; }
+      to { stroke-dashoffset: calc(283 - (283 * var(--percent3)) / 100); }
+    }
+
+    .progress-circle3 .progress-ring3 {
+      animation: progressAnim3 1s ease forwards;
+    }
+
+    .progress-circle4 {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .progress-circle4 svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-circle4 .bg-circle4 {
+      fill: none;
+      stroke: #2D3748;
+      stroke-width: 10;
+    }
+
+    .progress-circle4 .progress-ring4 {
+      fill: none;
+      stroke: url(#progressGradient);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-dasharray: 283;
+      stroke-dashoffset: calc(283 - (283 * var(--percent4)) / 100);
+      transition: stroke-dashoffset 1s ease;
+    }
+
+    @keyframes progressAnim4 {
+      from { stroke-dashoffset: 283; }
+      to { stroke-dashoffset: calc(283 - (283 * var(--percent4)) / 100); }
+    }
+
+    .progress-circle4 .progress-ring4 {
+      animation: progressAnim4 1s ease forwards;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 16px;
+      }
+
+      .topbar {
+        padding: 0 1rem;
+      }
+
+      .company-carousel {
+        padding: 0;
+      }
+
+      .carousel-item {
+        flex: 0 0 50%;
+        max-width: 50%;
+      }
+
+      .carousel-nav {
+        display: none;
+      }
+
+      .stats-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .cards-row, .charts-row, .tables-row {
+        flex-direction: column;
+      }
+
+      .card-welcome, .card-sales, .card-active-users, .card-projects, .card-orders {
+        flex: none;
+      }
+
+      .search-bar input {
+        width: 100px;
+      }
+
+      .card-content {
+        margin-left: 4rem;
+      }
+
+      .icon-btns {
+        grid-gap: 0.5em;
+      }
+
+      .icon-btn {
+        width: 3.2em;
+        height: 3.2em;
+        margin-top: 50%;
+      }
+
+      .icon-btn__icon {
+        font-size: 1rem;
+      }
+
+      .icon-btn__label {
+        font-size: 0.75em;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .content {
+        padding: 12px;
+      }
+
+      .carousel-item {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+
+      .stats-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 0.75rem;
+      }
+
+      .card-welcome {
+        min-height: 250px;
+      }
+
+      .welcome-text h3 {
+        font-size: 1.25rem;
+      }
+
+      .welcome-text .subtitle {
+        font-size: 0.875rem;
+      }
+
+      .card-title, .chart-title, .table-title {
+        font-size: 0.75rem;
+      }
+
+      .card-value {
+        font-size: 1rem;
+      }
+
+      .data-table, .orders-list {
+        font-size: 0.7rem;
+      }
+
+      .order-name {
+        max-width: 60%;
+      }
+
+      .icon-btn {
+        width: 2.8em;
+        height: 2.8em;
+        padding-right: 10%;
+        margin-top: 20%;
+      }
+
+      .icon-btn__icon {
+        font-size: 0.9rem;
+      }
+
+      .icon-btn__label {
+        font-size: 0.7em;
+      }
+
+      .chart-donut {
+        width: 100px;
+        height: 100px;
+      }
+
+      .chart-center .percent {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="content">
+    <header class="topbar">
+      <img src="img/ENIRIS_LOGO.png" style="width: 4.5%;" alt="Logo" class="logo" />
+      <div class="topbar-actions">
+        <div class="search-bar">
+          <span class="material-icons">search</span>
+          <input type="text" placeholder="Search company..." id="company-search" />
+        </div>
+      </div>
+    </header>
+    <section class="company-carousel">
+      <div class="carousel-container" id="carousel">
+        <div class="carousel-item " data-company-id="1"><button style="background: var(--gradient-blue);" onclick="window.location.href='index.html'">ECOTRONIC</button></div>
+        <div class="carousel-item " data-company-id="2"><button style="background: var(--gradient-purple);" onclick="window.location.href='SUNELEKTRO.html'">SUN ELEKTRO</button></div>
+        <div class="carousel-item" data-company-id="3"><button style="background: var(--gradient-orange);" onclick="window.location.href='VANDOTEC.html'">VANDOTEC</button></div>
+        <div class="carousel-item" data-company-id="4"><button style="background: var(--gradient-green);" onclick="window.location.href='OMNIPOWER.html'">OMNIPOWER</button></div>
+        <div class="carousel-item" data-company-id="5"><button style="background: var(--gradient-blue);" onclick="window.location.href='LICHT.html'">LICHT EN ELEKTRO</button></div>
+        <div class="carousel-item" data-company-id="6"><button style="background: var(--gradient-purple);" onclick="window.location.href='INSODELV.html'">INSODELV</button></div>
+        <div class="carousel-item" data-company-id="7"><button style="background: var(--gradient-orange);" onclick="window.location.href='GREENERTHINGS.html'">GREENERTHINGS</button></div>
+        <div class="carousel-item" data-company-id="8"><button style="background: var(--gradient-green);" onclick="window.location.href='GREEN.html'">GREEN HOUSE</button></div>
+        <div class="carousel-item" data-company-id="9"><button style="background: var(--gradient-blue);" onclick="window.location.href='G&D.html'">G&D</button></div>
+        <div class="carousel-item" data-company-id="10"><button style="background: var(--gradient-purple);" onclick="window.location.href='EXTRA.html'">EXTRA POWER</button></div>
+        <div class="carousel-item" data-company-id="11"><button style="background: var(--gradient-orange);" onclick="window.location.href='ENERGY.html'">ENERGY@HOME</button></div>
+        <div class="carousel-item" data-company-id="12"><button style="background: var(--gradient-green);" onclick="window.location.href='ECOX.html'">ECOX</button></div>
+        <div class="carousel-item" data-company-id="13"><button style="background: var(--gradient-blue);" onclick="window.location.href='EARTH.html'">EARTH</button></div>
+        <div class="carousel-item" data-company-id="14"><button style="background: var(--gradient-purple);" onclick="window.location.href='CKS.html'">CKS SERVICE</button></div>
+        <div class="carousel-item active" data-company-id="15"><button style="background: var(--gradient-orange);" onclick="window.location.href='BELGIAN.html'">BELGIAN ECO ENERGY</button></div>
+        <div class="carousel-item" data-company-id="16"><button style="background: var(--gradient-green);" onclick="window.location.href='BEAUVENT.html'">BEAUVENT</button></div>
+        <div class="carousel-item" data-company-id="17"><button style="background: var(--gradient-blue);" onclick="window.location.href='7C.html'">7C GROENI</button></div>
+        <div class="carousel-item" data-company-id="18"><button style="background: var(--gradient-purple);" onclick="window.location.href='INTELLIGENT.html'">INTELLIGENT WONEN</button></div>
+        
+      </div>
+      <div class="carousel-nav">
+        <button class="nav-left"><span class="material-icons">chevron_left</span></button>
+        <button class="nav-right"><span class="material-icons">chevron_right</span></button>
+      </div>
+    </section>
+    <section class="stats-cards">
+      <div class="card card-kpi card-money">
+        <div class="icon-btns">
+          <button class="icon-btn" aria-label="EBIT">
+            <span class="icon-btn__back"></span>
+            <span class="icon-btn__front">
+              <span class="icon-btn__icon material-icons">trending_up</span>
+            </span>
+            <span class="icon-btn__label"></span>
+          </button>
+        </div>
+        <div class="card-content">
+          <p class="card-title">EBIT</p>
+          <p class="card-value" id="money-value">651 883 €<span class="card-change positive"></span></p>
+        </div>
+      </div>
+      <div class="card card-kpi card-users">
+        <div class="icon-btns">
+          <button class="icon-btn" aria-label="Net Income">
+            <span class="icon-btn__back"></span>
+            <span class="icon-btn__front">
+              <span class="icon-btn__icon material-icons">attach_money</span>
+            </span>
+            <span class="icon-btn__label"></span>
+          </button>
+        </div>
+        <div class="card-content">
+          <p class="card-title">Net Income</p>
+          <p class="card-value" id="users-value">651 883 €<span class="card-change positive"></span></p>
+        </div>
+      </div>
+      <div class="card card-kpi card-clients">
+        <div class="icon-btns">
+          <button class="icon-btn" aria-label="Equity">
+            <span class="icon-btn__back"></span>
+            <span class="icon-btn__front">
+              <span class="icon-btn__icon material-icons">account_balance</span>
+            </span>
+            <span class="icon-btn__label"></span>
+          </button>
+        </div>
+        <div class="card-content">
+          <p class="card-title">Equity</p>
+          <p class="card-value" id="clients-value">5 037 837 €<span class="card-change negative"></span></p>
+        </div>
+      </div>
+      <div class="card card-kpi card-sales">
+        <div class="icon-btns">
+          <button class="icon-btn" aria-label="Total Sales">
+            <span class="icon-btn__back"></span>
+            <span class="icon-btn__front">
+              <span class="icon-btn__icon material-icons">trending_down</span>
+            </span>
+            <span class="icon-btn__label"></span>
+          </button>
+        </div>
+        <div class="card-content">
+          <p class="card-title">Total Liabilities</p>
+          <p class="card-value" id="sales-value">5 037 837 €<span class="card-change positive"></span></p>
+        </div>
+      </div>
+    </section>
+    <section class="cards-row">
+      <div class="card card-welcome">
+        <div class="welcome-text">
+         
+        </div>
+        <div class="welcome-illustration">
+        </div>
+      </div>
+      <div class="cards-column">
+        <div class="card card-satisfaction">
+          <p class="card-title2">Current Ratio</p>
+          <div class="chart-donut">
+            <div class="progress-circle1" style="--percent1: 25;">
+              <svg viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color: #4318FF;" />
+                    <stop offset="100%" style="stop-color: #67acf6;" />
+                  </linearGradient>
+                </defs>
+                <circle class="bg-circle1" cx="50" cy="50" r="45"></circle>
+                <circle class="progress-ring1" cx="50" cy="50" r="45"></circle>
+              </svg>
+            </div>
+            <div class="chart-center">
+              <span class="percent" id="currentRatio-value">25%</span>
+            </div>
+            <div class="chart-labels">
+            </div>
+          </div>
+        </div>
+        <div class="cards-column">
+            <div class="card card-satisfaction">
+              <p class="card-title2">ROA</p>
+              <div class="chart-donut">
+                <div class="progress-circle2" style="--percent2: 15;">
+                  <svg viewBox="0 0 100 100">
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: #ff6518;" />
+                        <stop offset="100%" style="stop-color: #f6ac67;" />
+                      </linearGradient>
+                    </defs>
+                    <circle class="bg-circle2" cx="50" cy="50" r="45"></circle>
+                    <circle class="progress-ring2" cx="50" cy="50" r="45"></circle>
+                  </svg>
+                </div>
+                <div class="chart-center">
+                  <span class="percent" id="roa-value">15%</span>
+                </div>
+                <div class="chart-labels">
+                </div>
+              </div>
+            </div>
+      </div>
+    </section>
+
+    <section class="charts-row">
+        
+        <div class="card card-chart card-sales">
+            <div class="chart-header">
+              <p class="chart-title">Sales Overview</p>
+              <p class="chart-subtitle text-success" id="sales-subtitle"></p>
+            </div>
+            <canvas id="salesChart"></canvas>
+          </div>
+      
+      <div class="cards-column">
+        <div class="card card-satisfaction">
+          <p class="card-title2">ROE</p>
+          <div class="chart-donut">
+            <div class="progress-circle3" style="--percent3: 30;">
+              <svg viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color: #ffec18;" />
+                    <stop offset="100%" style="stop-color: #eaf667;" />
+                  </linearGradient>
+                </defs>
+                <circle class="bg-circle3" cx="50" cy="50" r="45"></circle>
+                <circle class="progress-ring3" cx="50" cy="50" r="45"></circle>
+              </svg>
+            </div>
+            <div class="chart-center">
+              <span class="percent" id="roe-value">30%</span>
+            </div>
+            <div class="chart-labels">
+            </div>
+          </div>
+        </div>
+        <div class="cards-column">
+            <div class="card card-satisfaction">
+              <p class="card-title2">Debt to Equity</p>
+              <div class="chart-donut">
+                <div class="progress-circle4" style="--percent4: 5;">
+                  <svg viewBox="0 0 100 100">
+                    <defs>
+                      <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color: #ff1818;" />
+                        <stop offset="100%" style="stop-color: #f66767;" />
+                      </linearGradient>
+                    </defs>
+                    <circle class="bg-circle4" cx="50" cy="50" r="45"></circle>
+                    <circle class="progress-ring4" cx="50" cy="50" r="45"></circle>
+                  </svg>
+                </div>
+                <div class="chart-center">
+                  <span class="percent" id="DE-value">5%</span>
+                </div>
+                <div class="chart-labels">
+                </div>
+              </div>
+            </div>
+            
+    </section>
+    
+    <footer class="footer">
+     
+    </footer>
+  </main>
+  <script>
+
+    // Data for 19 companies (fictitious)
+    const companyData = {
+      1: {
+        name: "ECOTRONIC",
+        money: "33,134 €",
+        moneyChange: "",
+        moneyChangeClass: "positive",
+        users: "285,031 €",
+        usersChange: "",
+        usersChangeClass: "positive",
+        clients: "4,359,816 €",
+        clientsChange: "",
+        clientsChangeClass: "negative",
+        sales: "4,123,155 €",
+        salesChange: "",
+        salesChangeClass: "positive",
+        satisfaction:10,        
+        invited: 145,
+        bonus: "1,465",
+        safety: "",
+        salesData: [100, 120, 150, 170, 180, 200, 220, 210, 230, 250, 270, 300],
+        salesSubtitle: "(+5%) more in 2021",
+        usersSubtitle: "(+23) than last week",
+        activeUsers: "32,984",
+        clicks: "2.42m",
+        salesMetric: "$2,400",
+        items: "320",
+        projects: [
+          { name: "Chakra Soft UI Version", members: 3, budget: "$14,000", completion: 60 },
+          { name: "Add Progress Track", members: 2, budget: "$3,000", completion: 10 },
+          { name: "Fix Platform Errors", members: 4, budget: "Not set", completion: 100 }
+        ],
+        projectsCount: "30 done this month <span class='text-success'>+30%</span>",
+        orders: [
+          { name: "$2400, Design changes", date: "22 DEC 7:20 PM" },
+          { name: "New order #4219423", date: "21 DEC 11:21 PM" },
+          { name: "Server Payments for April", date: "21 DEC 9:28 PM" },
+          { name: "New card added for order #3210145", date: "20 DEC 3:52 PM" },
+          { name: "Unlock packages for Development", date: "19 DEC 11:35 PM" },
+          { name: "New order #9851258", date: "18 DEC 4:41 PM" }
+        ],
+        ordersCount: "+5% this month"
+      },
+      2: {
+        name: "Company 2",
+        money: "$45,000",
+        moneyChange: "+40%",
+        moneyChangeClass: "positive",
+        users: "1,800",
+        usersChange: "+3%",
+        usersChangeClass: "positive",
+        clients: "+2,500",
+        clientsChange: "–10%",
+        clientsChangeClass: "negative",
+        sales: "$150,000",
+        salesChange: "+6%",
+        salesChangeClass: "positive",
+        welcome: "Jane Smith",
+        satisfaction: 90,
+        currentRatio:1,
+        roa: 2,
+        roe:3,
+        DERatio:4,
+        invited: 120,
+        bonus: "1,200",
+        safety: "88%",
+        salesData: [80, 100, 130, 150, 160, 180, 200, 190, 210, 230, 250, 280],
+        salesSubtitle: "(+4%) more in 2021",
+        usersSubtitle: "(+20) than last week",
+        activeUsers: "28,500",
+        clicks: "1.95m",
+        salesMetric: "$2,000",
+        items: "300",
+        projects: [
+          { name: "Project X", members: 4, budget: "$12,000", completion: 70 },
+          { name: "Feature Y", members: 3, budget: "$4,000", completion: 20 },
+          { name: "Bug Fix Z", members: 5, budget: "$5,000", completion: 90 }
+        ],
+        projectsCount: "25 done this month <span class='text-success'>+25%</span>",
+        orders: [
+          { name: "$2000, UI Revamp", date: "23 DEC 8:15 PM" },
+          { name: "New order #4219500", date: "22 DEC 10:30 PM" },
+          { name: "Server Upgrade", date: "22 DEC 9:00 PM" },
+          { name: "New card added #3210200", date: "21 DEC 4:00 PM" },
+          { name: "Package Unlock", date: "20 DEC 12:45 PM" },
+          { name: "New order #9851300", date: "19 DEC 5:30 PM" }
+        ],
+        ordersCount: "+4% this month"
+      }
+    };
+   
+    // Initialize charts
+    const referralChart = new Chart(document.getElementById('referralChart'), {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [93, 7],
+          backgroundColor: ['#FFB547', '#2D3748'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    const salesChart = new Chart(document.getElementById('salesChart'), {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        datasets: [{
+          label: 'Sales',
+          data: [100, 120, 150, 170, 180, 200, 220, 210, 230, 250, 270, 300],
+          fill: true,
+          backgroundColor: 'rgba(67,24,255,0.2)',
+          borderColor: '#4318FF',
+          tension: 0.4
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, max: 500, grid: { color: 'rgba(255,255,255,0.1)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    // Update dashboard data
+    function updateDashboard(companyId) {
+      const data = companyData[companyId] || companyData[1];
+
+      document.getElementById('money-value').innerHTML = `${data.money} <span class="card-change ${data.moneyChangeClass}">${data.moneyChange}</span>`;
+      document.getElementById('users-value').innerHTML = `${data.users} <span class="card-change ${data.usersChangeClass}">${data.usersChange}</span>`;
+      document.getElementById('clients-value').innerHTML = `${data.clients} <span class="card-change ${data.clientsChangeClass}">${data.clientsChange}</span>`;
+      document.getElementById('sales-value').innerHTML = `${data.sales} <span class="card-change ${data.salesChangeClass}">${data.salesChange}</span>`;
+      document.getElementById('sales-value').innerHTML = `${data.sales} <span class="card-change ${data.salesChangeClass}">${data.salesChange}</span>`;
+      document.getElementById('welcome-text').innerHTML = `Welcome back,<br/>${data.welcome}`;
+      document.getElementById('currentRatio-value').textContent = `${data.currentRatio}%`;
+      document.getElementById('roa-value').textContent = `${data.roa}%`;
+      document.getElementById('roe-value').textContent = `${data.roe}%`;
+      document.getElementById('DE-value').textContent = `${data.DERatio}%`;
+      const progressCircle1 = document.querySelector('.progress-circle1');
+      const progressCircle2 = document.querySelector('.progress-circle2');
+      const progressCircle3 = document.querySelector('.progress-circle3');
+      const progressCircle4 = document.querySelector('.progress-circle4');
+      progressCircle1.style.setProperty('--percent1', data.currentRatio);
+      progressCircle2.style.setProperty('--percent2', data.roa);
+      progressCircle3.style.setProperty('--percent3', data.roe);
+      progressCircle4.style.setProperty('--percent4', data.DERatio);
+      document.getElementById('invited-value').textContent = data.invited;
+      document.getElementById('bonus-value').textContent = data.bonus;
+      document.getElementById('safety-value').textContent = data.safety;
+      referralChart.data.datasets[0].data = [parseInt(data.safety), 100 - parseInt(data.safety)];
+      referralChart.update();
+      document.getElementById('sales-subtitle').innerHTML = data.salesSubtitle;
+      document.getElementById('users-subtitle').innerHTML = data.usersSubtitle;
+      document.getElementById('active-users-value').textContent = data.activeUsers;
+      document.getElementById('clicks-value').textContent = data.clicks;
+      document.getElementById('sales-metric-value').textContent = data.salesMetric;
+      document.getElementById('items-value').textContent = data.items;
+      salesChart.data.datasets[0].data = data.salesData;
+      salesChart.update();
+      document.getElementById('projects-count').innerHTML = data.projectsCount;
+      const projectsTable = document.getElementById('projects-table').querySelector('tbody');
+      projectsTable.innerHTML = data.projects.map(project => `
+        <tr>
+          <td><strong>${project.name}</strong></td>
+          <td><span class="members-count">${project.members}</span></td>
+          <td>${project.budget}</td>
+          <td><span class="completion-bar" style="--pct:${project.completion}"></span> ${project.completion}%</td>
+        </tr>
+      `).join('');
+      document.getElementById('orders-count').innerHTML = data.ordersCount;
+      document.getElementById('orders-list').innerHTML = data.orders.map(order => `
+        <li><span class="order-name">${order.name}</span><span class="order-date">${order.date}</span></li>
+      `).join('');
+
+      // Update active state
+      document.querySelectorAll('.carousel-item').forEach(item => item.classList.remove('active'));
+      document.querySelector(`.carousel-item[data-company-id="${companyId}"]`).classList.add('active');
+    }
+
+    // Carousel navigation
+    const carousel = document.getElementById('carousel');
+    document.querySelector('.nav-left').addEventListener('click', () => {
+      carousel.scrollBy({ left: -carousel.offsetWidth / 3, behavior: 'smooth' });
+    });
+    document.querySelector('.nav-right').addEventListener('click', () => {
+      carousel.scrollBy({ left: carousel.offsetWidth / 3, behavior: 'smooth' });
+    });
+
+    // Company button click
+    document.querySelectorAll('.carousel-item button').forEach(button => {
+      button.addEventListener('click', () => {
+        const companyId = button.parentElement.getAttribute('data-company-id');
+        updateDashboard(companyId);
+      });
+    });
+
+    // Search functionality
+    document.getElementById('company-search').addEventListener('input', (e) => {
+      const searchValue = e.target.value.trim();
+      const companyId = Object.keys(companyData).find(id => companyData[id].name.toLowerCase() === searchValue.toLowerCase());
+      if (companyId) {
+        updateDashboard(companyId);
+        carousel.scrollTo({
+          left: document.querySelector(`.carousel-item[data-company-id="${companyId}"]`).offsetLeft,
+          behavior: 'smooth'
+        });
+      }
+    });
+
+    // Record trigger
+    document.querySelector('.record-trigger').addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('Recording functionality not implemented in this demo.');
+    });
+
+    // Initialize dashboard with Company 1
+    updateDashboard(1);
+  </script>
+</body>
+</html>
