@@ -1,0 +1,661 @@
+<body>
+    <main class="content">
+        <header class="topbar">
+          <img src="img/ENIRIS_LOGO.png" style="width: 4.5%;" alt="Logo" class="logo" />
+          <div class="topbar-actions">
+            <div class="search-bar">
+              <span class="material-icons">search</span>
+              <input type="text" placeholder="Search company..." id="company-search" />
+            </div>
+          </div>
+        </header>
+        <section class="company-carousel">
+          <div class="carousel-container" id="carousel">
+            <div class="carousel-item " data-company-id="1"><button style="background: var(--gradient-blue);" onclick="window.location.href='index.html'">ECOTRONIC</button></div>
+            <div class="carousel-item" data-company-id="2"><button style="background: var(--gradient-purple);" onclick="window.location.href='SUNELEKTRO.html'">SUN ELEKTRO</button></div>
+            <div class="carousel-item" data-company-id="3"><button style="background: var(--gradient-orange);" onclick="window.location.href='VANDOTEC.html'">VANDOTEC</button></div>
+            <div class="carousel-item" data-company-id="4"><button style="background: var(--gradient-green);" onclick="window.location.href='OMNIPOWER.html'">OMNIPOWER</button></div>
+            <div class="carousel-item" data-company-id="5"><button style="background: var(--gradient-blue);" onclick="window.location.href='LICHT.html'">LICHT EN ELEKTRO</button></div>
+            <div class="carousel-item" data-company-id="6"><button style="background: var(--gradient-purple);" onclick="window.location.href='INSODELV.html'">INSODELV</button></div>
+            <div class="carousel-item" data-company-id="7"><button style="background: var(--gradient-orange);" onclick="window.location.href='GREENERTHINGS.html'">GREENERTHINGS</button></div>
+            <div class="carousel-item" data-company-id="8"><button style="background: var(--gradient-green);" onclick="window.location.href='GREEN.html'">GREEN HOUSE</button></div>
+            <div class="carousel-item" data-company-id="9"><button style="background: var(--gradient-blue);" onclick="window.location.href='G&D.html'">G&D</button></div>
+            <div class="carousel-item" data-company-id="10"><button style="background: var(--gradient-purple);" onclick="window.location.href='EXTRA.html'">EXTRA POWER</button></div>
+            <div class="carousel-item" data-company-id="11"><button style="background: var(--gradient-orange);" onclick="window.location.href='ENERGY.html'">ENERGY@HOME</button></div>
+            <div class="carousel-item" data-company-id="12"><button style="background: var(--gradient-green);" onclick="window.location.href='ECOX.html'">ECOX</button></div>
+            <div class="carousel-item" data-company-id="13"><button style="background: var(--gradient-blue);" onclick="window.location.href='EARTH.html'">EARTH</button></div>
+            <div class="carousel-item" data-company-id="14"><button style="background: var(--gradient-purple);" onclick="window.location.href='CKS.html'">CKS SERVICE</button></div>
+            <div class="carousel-item" data-company-id="15"><button style="background: var(--gradient-orange);" onclick="window.location.href='BELGIAN.html'">BELGIAN ECO ENERGY</button></div>
+            <div class="carousel-item" data-company-id="16"><button style="background: var(--gradient-green);" onclick="window.location.href='BEAUVENT.html'">BEAUVENT</button></div>
+            <div class="carousel-item" data-company-id="17"><button style="background: var(--gradient-blue);" onclick="window.location.href='7C.html'">7C GROENI</button></div>
+            <div class="carousel-item" data-company-id="18"><button style="background: var(--gradient-purple);" onclick="window.location.href='INTELLIGENT.html'">INTELLIGENT WONEN</button></div>
+            
+          </div>
+          <div class="carousel-nav">
+            <button class="nav-left"><span class="material-icons"></span></button>
+        <button class="nav-right"><span class="material-icons"></span></button>
+          </div>
+        </section>
+    
+        <section class="cards-row2">
+            <div class="card2  card-money2">
+                <div class="button-container">
+                    <button class="ai-button"><a href="" style="text-decoration: none;">
+                      <span>Download a PDF summary</span></a>
+                    </button>
+                    <button class="ai-button"><a href="NewCompany.html" style="text-decoration: none;">
+                      <span>Analyze an other company</span></a>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        
+    <div class="container">
+        <div class="header">
+            <h1>Financial Analysis Results</h1>
+            <div class="timestamp" id="timestamp"></div>
+        </div>
+
+        <div id="content">
+            <div style="text-align: center; color: white; font-size: 18px; padding: 20px;">
+                Loading analysis...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Script started');
+        
+        function getFinancialData() {
+            console.log('Getting financial data...');
+            
+            // Méthode 1: Récupérer depuis les paramètres URL
+            const urlParams = new URLSearchParams(window.location.search);
+            console.log('URL params:', window.location.search);
+            
+            const dataFromURL = {};
+            const expectedFields = [
+                'currentAssets', 'currentLiabilities', 'netIncome', 'revenue',
+                'totalAssets', 'equity', 'totalLiabilities', 'ebit'
+            ];
+            
+            let hasURLData = false;
+            expectedFields.forEach(field => {
+                const value = urlParams.get(field);
+                if (value) {
+                    dataFromURL[field] = parseFloat(value);
+                    hasURLData = true;
+                    console.log(`Found ${field}: ${value}`);
+                }
+            });
+            
+            if (hasURLData) {
+                console.log('Data from URL:', dataFromURL);
+                return dataFromURL;
+            }
+            
+            // Méthode 2: Récupérer depuis sessionStorage
+            console.log('Checking sessionStorage...');
+            const sessionData = sessionStorage.getItem('financialData');
+            if (sessionData) {
+                try {
+                    const parsedData = JSON.parse(sessionData);
+                    console.log('Data from sessionStorage:', parsedData);
+                    return parsedData;
+                } catch (e) {
+                    console.error('Error parsing session data:', e);
+                }
+            }
+            
+            console.log('No data found');
+            return null;
+        }
+        
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+        
+        function formatRatio(value, decimals = 2) {
+            return value.toFixed(decimals);
+        }
+        
+        function calculateRatios(data) {
+            const ratios = {};
+            
+            // Current Ratio
+            if (data.currentLiabilities && data.currentLiabilities !== 0) {
+                ratios.currentRatio = data.currentAssets / data.currentLiabilities;
+            }
+            
+            // ROA (Return on Assets)
+            if (data.totalAssets && data.totalAssets !== 0) {
+                ratios.roa = (data.netIncome / data.totalAssets) * 100;
+            }
+            
+            // ROE (Return on Equity)
+            if (data.equity && data.equity !== 0) {
+                ratios.roe = (data.netIncome / data.equity) * 100;
+            }
+            
+            // Profit Margin
+            if (data.revenue && data.revenue !== 0) {
+                ratios.profitMargin = (data.netIncome / data.revenue) * 100;
+            }
+            
+            // Debt-to-Equity Ratio
+            if (data.equity && data.equity !== 0) {
+                ratios.debtToEquity = data.totalLiabilities / data.equity;
+            }
+            
+            // Asset Turnover
+            if (data.totalAssets && data.totalAssets !== 0) {
+                ratios.assetTurnover = data.revenue / data.totalAssets;
+            }
+            
+            return ratios;
+        }
+        
+        function displayData(data) {
+            console.log('Displaying data:', data);
+            const ratios = calculateRatios(data);
+            console.log('Calculated ratios:', ratios);
+            
+            const content = `
+                <div class="data-section">
+                    <div class="data-card">
+                        <h3>📊 Assets & Liabilities</h3>
+                        <div class="data-item">
+                            <span class="data-label">Current Assets</span>
+                            <span class="data-value">${formatCurrency(data.currentAssets || 0)}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Total Assets</span>
+                            <span class="data-value">${formatCurrency(data.totalAssets || 0)}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Current Liabilities</span>
+                            <span class="data-value">${formatCurrency(data.currentLiabilities || 0)}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Total Liabilities</span>
+                            <span class="data-value">${formatCurrency(data.totalLiabilities || 0)}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Equity</span>
+                            <span class="data-value">${formatCurrency(data.equity || 0)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="data-card">
+                        <h3>💰 Income Statement</h3>
+                        <div class="data-item">
+                            <span class="data-label">Revenue</span>
+                            <span class="data-value">${formatCurrency(data.revenue || 0)}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">EBIT</span>
+                            <span class="data-value">${formatCurrency(data.ebit || 0)}</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-label">Net Income</span>
+                            <span class="data-value">${formatCurrency(data.netIncome || 0)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ratios-section">
+                    <h2 style="color: #333; margin-bottom: 10px;">📈 Financial Ratios Analysis</h2>
+                    <p style="color: #666; margin-bottom: 20px;">Key performance indicators calculated from your financial data</p>
+                    
+                    <div class="ratios-grid">
+                        ${ratios.currentRatio ? `
+                        <div class="ratio-card">
+                            <div class="ratio-title">Current Ratio</div>
+                            <div class="ratio-value">${formatRatio(ratios.currentRatio)}</div>
+                            <div class="ratio-description">Liquidity measure</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${ratios.roa ? `
+                        <div class="ratio-card">
+                            <div class="ratio-title">ROA</div>
+                            <div class="ratio-value">${formatRatio(ratios.roa)}%</div>
+                            <div class="ratio-description">Return on Assets</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${ratios.roe ? `
+                        <div class="ratio-card">
+                            <div class="ratio-title">ROE</div>
+                            <div class="ratio-value">${formatRatio(ratios.roe)}%</div>
+                            <div class="ratio-description">Return on Equity</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${ratios.profitMargin ? `
+                        <div class="ratio-card">
+                            <div class="ratio-title">Profit Margin</div>
+                            <div class="ratio-value">${formatRatio(ratios.profitMargin)}%</div>
+                            <div class="ratio-description">Profitability measure</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${ratios.debtToEquity ? `
+                        <div class="ratio-card">
+                            <div class="ratio-title">Debt-to-Equity</div>
+                            <div class="ratio-value">${formatRatio(ratios.debtToEquity)}</div>
+                            <div class="ratio-description">Leverage measure</div>
+                        </div>
+                        ` : ''}
+                        
+                        ${ratios.assetTurnover ? `
+                        <div class="ratio-card">
+                            <div class="ratio-title">Asset Turnover</div>
+                            <div class="ratio-value">${formatRatio(ratios.assetTurnover)}</div>
+                            <div class="ratio-description">Efficiency measure</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <h3 style="color: #333; margin-bottom: 20px;">Next Steps</h3>
+                    <button class="btn btn-primary" onclick="exportData()">📊 Export Report</button>
+                    <button class="btn btn-primary" onclick="analyzeWithAI()">🤖 AI Analysis</button>
+                    <a href="index.html" class="btn btn-secondary">🔄 New Analysis</a>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = content;
+        }
+        
+        function displayError() {
+            console.log('Displaying error message');
+            const content = `
+                <div class="error-message">
+                    <h2>⚠️ No Data Found</h2>
+                    <p>It seems like no financial data was provided. Please fill out the form first.</p>
+                    
+                    <div class="debug-info">
+                        <strong>Debug Info:</strong><br>
+                        URL: ${window.location.href}<br>
+                        URL Parameters: ${window.location.search || 'None'}<br>
+                        SessionStorage: ${sessionStorage.getItem('financialData') ? 'Found' : 'Not found'}
+                    </div>
+                    
+                    <a href="index.html" class="btn btn-primary">📝 Go to Form</a>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = content;
+        }
+        
+        function exportData() {
+            const data = getFinancialData();
+            if (!data) return;
+            
+            const ratios = calculateRatios(data);
+            const timestamp = new Date().toISOString();
+            
+            const exportData = {
+                timestamp: timestamp,
+                inputData: data,
+                calculatedRatios: ratios
+            };
+            
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `financial-analysis-${Date.now()}.json`;
+            link.click();
+        }
+        
+        function analyzeWithAI() {
+            const data = getFinancialData();
+            if (!data) return;
+            
+            const ratios = calculateRatios(data);
+            
+            const prompt = `Please analyze this financial data and provide insights:
+            
+Current Assets: $${(data.currentAssets || 0).toLocaleString()}
+Total Assets: $${(data.totalAssets || 0).toLocaleString()}  
+Current Liabilities: $${(data.currentLiabilities || 0).toLocaleString()}
+Total Liabilities: $${(data.totalLiabilities || 0).toLocaleString()}
+Equity: $${(data.equity || 0).toLocaleString()}
+Revenue: $${(data.revenue || 0).toLocaleString()}
+EBIT: $${(data.ebit || 0).toLocaleString()}
+Net Income: $${(data.netIncome || 0).toLocaleString()}
+
+Key Ratios:
+${ratios.currentRatio ? `Current Ratio: ${ratios.currentRatio.toFixed(2)}` : ''}
+${ratios.roa ? `ROA: ${ratios.roa.toFixed(2)}%` : ''}
+${ratios.roe ? `ROE: ${ratios.roe.toFixed(2)}%` : ''}
+${ratios.profitMargin ? `Profit Margin: ${ratios.profitMargin.toFixed(2)}%` : ''}
+${ratios.debtToEquity ? `Debt-to-Equity: ${ratios.debtToEquity.toFixed(2)}` : ''}
+
+Please provide:
+1. Overall financial health assessment
+2. Strengths and weaknesses  
+3. Recommendations for improvement
+4. Industry comparison context
+5. Risk factors to consider`;
+            
+            const encodedPrompt = encodeURIComponent(prompt);
+            const chatGPTUrl = `https://chat.openai.com/?q=${encodedPrompt}`;
+            
+            window.open(chatGPTUrl, '_blank');
+        }
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded');
+            
+            // Afficher le timestamp
+            document.getElementById('timestamp').textContent = 
+                `Analysis generated on ${new Date().toLocaleString()}`;
+            
+            // Récupérer et afficher les données
+            const data = getFinancialData();
+            
+            if (data && Object.keys(data).length > 0) {
+                displayData(data);
+            } else {
+                displayError();
+            }
+        });
+        
+        // Test immédiat
+        console.log('Testing data retrieval...');
+        const testData = getFinancialData();
+        console.log('Test result:', testData);
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Data for 19 companies (fictitious)
+    const companyData = {
+      1: {
+        name: "ECOTRONIC",
+        money: "33,134 €",
+        moneyChange: "",
+        moneyChangeClass: "positive",
+        users: "285,031 €",
+        usersChange: "",
+        usersChangeClass: "positive",
+        clients: "4,359,816 €",
+        clientsChange: "",
+        clientsChangeClass: "negative",
+        sales: "4,123,155 €",
+        salesChange: "",
+        salesChangeClass: "positive",
+        satisfaction:10,        
+        invited: 145,
+        bonus: "1,465",
+        safety: "",
+        salesData: [100, 120, 150, 170, 180, 200, 220, 210, 230, 250, 270, 300],
+        salesSubtitle: "(+5%) more in 2021",
+        usersSubtitle: "(+23) than last week",
+        activeUsers: "32,984",
+        clicks: "2.42m",
+        salesMetric: "$2,400",
+        items: "320",
+        projects: [
+          { name: "Chakra Soft UI Version", members: 3, budget: "$14,000", completion: 60 },
+          { name: "Add Progress Track", members: 2, budget: "$3,000", completion: 10 },
+          { name: "Fix Platform Errors", members: 4, budget: "Not set", completion: 100 }
+        ],
+        projectsCount: "30 done this month <span class='text-success'>+30%</span>",
+        orders: [
+          { name: "$2400, Design changes", date: "22 DEC 7:20 PM" },
+          { name: "New order #4219423", date: "21 DEC 11:21 PM" },
+          { name: "Server Payments for April", date: "21 DEC 9:28 PM" },
+          { name: "New card added for order #3210145", date: "20 DEC 3:52 PM" },
+          { name: "Unlock packages for Development", date: "19 DEC 11:35 PM" },
+          { name: "New order #9851258", date: "18 DEC 4:41 PM" }
+        ],
+        ordersCount: "+5% this month"
+      },
+      2: {
+        name: "Company 2",
+        money: "$45,000",
+        moneyChange: "+40%",
+        moneyChangeClass: "positive",
+        users: "1,800",
+        usersChange: "+3%",
+        usersChangeClass: "positive",
+        clients: "+2,500",
+        clientsChange: "–10%",
+        clientsChangeClass: "negative",
+        sales: "$150,000",
+        salesChange: "+6%",
+        salesChangeClass: "positive",
+        welcome: "Jane Smith",
+        satisfaction: 90,
+        currentRatio:1,
+        roa: 2,
+        roe:3,
+        DERatio:4,
+        invited: 120,
+        bonus: "1,200",
+        safety: "88%",
+        salesData: [80, 100, 130, 150, 160, 180, 200, 190, 210, 230, 250, 280],
+        salesSubtitle: "(+4%) more in 2021",
+        usersSubtitle: "(+20) than last week",
+        activeUsers: "28,500",
+        clicks: "1.95m",
+        salesMetric: "$2,000",
+        items: "300",
+        projects: [
+          { name: "Project X", members: 4, budget: "$12,000", completion: 70 },
+          { name: "Feature Y", members: 3, budget: "$4,000", completion: 20 },
+          { name: "Bug Fix Z", members: 5, budget: "$5,000", completion: 90 }
+        ],
+        projectsCount: "25 done this month <span class='text-success'>+25%</span>",
+        orders: [
+          { name: "$2000, UI Revamp", date: "23 DEC 8:15 PM" },
+          { name: "New order #4219500", date: "22 DEC 10:30 PM" },
+          { name: "Server Upgrade", date: "22 DEC 9:00 PM" },
+          { name: "New card added #3210200", date: "21 DEC 4:00 PM" },
+          { name: "Package Unlock", date: "20 DEC 12:45 PM" },
+          { name: "New order #9851300", date: "19 DEC 5:30 PM" }
+        ],
+        ordersCount: "+4% this month"
+      }
+    };
+   
+    // Initialize charts
+    const referralChart = new Chart(document.getElementById('referralChart'), {
+      type: 'doughnut',
+      data: {
+        datasets: [{
+          data: [93, 7],
+          backgroundColor: ['#FFB547', '#2D3748'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        cutout: '70%',
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    const salesChart = new Chart(document.getElementById('salesChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Current Ratio', 'ROA', 'ROE', 'Debt to Equity', 'Global Score'],
+        datasets: [{
+          label: 'Ratio',
+          data: [70,25,30,5,28.5],
+          fill: true,
+          backgroundColor: 'rgb(165, 42, 42,0.7)',
+          borderColor: '#4318FF',
+          tension: 0.4
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+
+
+    document.getElementById('financialForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Récupérer tous les inputs
+            const inputs = document.querySelectorAll('.ai-input');
+            let isValid = true;
+            const financialData = {};
+            
+            // Reset des styles d'erreur
+            inputs.forEach(input => {
+                input.classList.remove('error', 'success');
+                const errorDiv = document.getElementById(`error-${input.id}`);
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            });
+            
+            // Validation de chaque champ
+            inputs.forEach(input => {
+                const value = input.value.trim();
+                const label = input.getAttribute('data-label');
+                const errorDiv = document.getElementById(`error-${input.id}`);
+                
+                // Vérifier si le champ est vide
+                if (!value) {
+                    input.classList.add('error');
+                    if (errorDiv) {
+                        errorDiv.textContent = `${label} is required`;
+                        errorDiv.style.display = 'block';
+                    }
+                    isValid = false;
+                    return;
+                }
+                
+                // Vérifier si c'est un nombre valide
+                const numValue = parseFloat(value.replace(/[,$\s]/g, ''));
+                if (isNaN(numValue)) {
+                    input.classList.add('error');
+                    if (errorDiv) {
+                        errorDiv.textContent = `${label} must be a valid number`;
+                        errorDiv.style.display = 'block';
+                    }
+                    isValid = false;
+                    return;
+                }
+                
+                // Si tout est bon
+                input.classList.add('success');
+                financialData[input.id] = numValue;
+            });
+            
+            // Validations logiques supplémentaires
+            if (isValid) {
+                // Vérifier que Total Assets >= Current Assets
+                if (financialData.totalAssets < financialData.currentAssets) {
+                    showFieldError('totalAssets', 'Total Assets cannot be less than Current Assets');
+                    isValid = false;
+                }
+                
+                // Vérifier que Current Assets >= Current Liabilities (optionnel, peut être normal)
+                // Autres validations logiques peuvent être ajoutées ici
+            }
+            
+            if (isValid) {
+                // Afficher le loading
+                document.getElementById('loading').style.display = 'block';
+                document.querySelector('.ai-submit').disabled = true;
+                
+                // Simuler un traitement
+                setTimeout(() => {
+                    // Sauvegarder les données
+                    saveDataAndRedirect(financialData);
+                }, 1500);
+            }
+        });
+        
+        function showFieldError(fieldId, message) {
+            const input = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(`error-${fieldId}`);
+            
+            input.classList.remove('success');
+            input.classList.add('error');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        function saveDataAndRedirect(data) {
+            try {
+                // Méthode 1: Utiliser les paramètres URL (recommandé pour GitHub Pages)
+                const params = new URLSearchParams();
+                Object.keys(data).forEach(key => {
+                    params.append(key, data[key]);
+                });
+                
+                // Méthode 2: Utiliser sessionStorage comme backup
+                sessionStorage.setItem('financialData', JSON.stringify(data));
+                sessionStorage.setItem('analysisTimestamp', Date.now().toString());
+                
+                // Afficher le message de succès
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+                
+                // Rediriger vers la page d'analyse après 2 secondes
+                setTimeout(() => {
+                    // Changez 'analysis.html' par le nom de votre page de destination
+                    window.location.href = `a.html?${params.toString()}`;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error saving data:', error);
+                alert('An error occurred while processing your data. Please try again.');
+                document.getElementById('loading').style.display = 'none';
+                document.querySelector('.ai-submit').disabled = false;
+            }
+        }
+        
+        // Fonction utilitaire pour formatter les nombres pendant la saisie
+        document.querySelectorAll('.ai-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                // Enlever les classes d'erreur pendant la saisie
+                this.classList.remove('error');
+                const errorDiv = document.getElementById(`error-${this.id}`);
+                if (errorDiv) {
+                    errorDiv.style.display = 'none';
+                }
+            });
+            
+            // Permettre uniquement les nombres, points, virgules et espaces
+            input.addEventListener('keypress', function(e) {
+                const allowedChars = /[0-9.,\s$-]/;
+                if (!allowedChars.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        });

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Analyse de compte de résultat (GPT‑4)</title>
+  <!-- ————————  STYLE  ———————— -->
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --card-bg: #ffffff;
+      --border: #d0d0d0;
+      --accent: #0066cc;
+      --danger: #d62929;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      margin: 2.5rem;
+      line-height: 1.5;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.8rem;
+      color: var(--accent);
+    }
+
+    .card {
+      max-width: 680px;
+      margin: auto;
+      background: var(--card-bg);
+      padding: 2rem 2.5rem;
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    label {
+      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
+    }
+
+    input[type="file"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: 0.4rem;
+      font: inherit;
+      margin-top: 0.3rem;
+    }
+
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem 1rem;
+      width: 100%;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 0.4rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #0054a8;
+    }
+
+    .results {
+      margin-top: 2.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.55rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eeeeee;
+    }
+
+    .msg {
+      margin-top: 1rem;
+      color: var(--danger);
+    }
+  </style>
+
+  <!-- ————————  PDF.js (module)  ———————— -->
+  <!-- On charge pdf.js en module ES afin de l'utiliser côté client -->
+  <script type="module">
+    import * as pdfjsLib from "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.mjs";
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.mjs";
+    window.pdfjsLib = pdfjsLib; // exposer globalement pour le script classique
+  </script>
+</head>
+<body>
+  <h1>Analyse de compte de résultat</h1>
+
+  <section class="card">
+    <label for="pdfInput">Fichier PDF :</label>
+    <input type="file" id="pdfInput" accept="application/pdf" />
+
+    <label for="apiKey">Clé API OpenAI :</label>
+    <input type="password" id="apiKey" placeholder="sk-..." />
+
+    <button id="analyzeBtn">Analyser le compte de résultat</button>
+
+    <div id="results" class="results"></div>
+  </section>
+
+  <!-- ————————  SCRIPT PRINCIPAL  ———————— -->
+  <script>
+    const pdfInput = document.getElementById("pdfInput");
+    const apiKeyInput = document.getElementById("apiKey");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const resultsDiv = document.getElementById("results");
+
+    // Extraire le texte d'un PDF via pdf.js
+    async function extractTextFromPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const maxPages = pdf.numPages;
+      let fullText = "";
+
+      for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join("");
+        fullText += pageText + "\n";
+      }
+      return fullText;
+    }
+
+    // Appeler l'API OpenAI pour extraire les données financières
+    async function analyzeFinancials(pdfText, apiKey) {
+      const messages = [
+        {
+          role: "system",
+          content: "Vous êtes un assistant financier. Extrayez uniquement les valeurs numériques des éléments suivants : Revenue (70), Gross Margin (m9900), EBIT (m9901), Net Income (m9904), Equity (10/15), Total Liabilities (17/49), Total Assets (20/58), Current Assets (29/58), Current Liabilities (42/48), Inventory (30/36), Staff Costs (62), Average FTE (VTE), HR Entrants, HR Exits (ETP). Fournissez-les au format JSON avec des paires clé-valeur."
+        },
+        {
+          role: "user",
+          content: pdfText
+        }
+      ];
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o", // ou "gpt-4o-mini" selon ton plan
+          temperature: 0,
+          messages,
+          max_tokens: 800
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erreur API OpenAI : ${response.status} ${response.statusText}`);
+      }
+      const data = await response.json();
+      return data.choices[0].message.content;
+    }
+
+    // Afficher les résultats (JSON ou texte structuré)
+    function displayResults(content) {
+      let obj;
+      try {
+        obj = JSON.parse(content);
+      } catch {
+        obj = null;
+      }
+
+      let html = "<table><thead><tr><th>Indicateur</th><th>Valeur</th></tr></thead><tbody>";
+
+      if (obj && typeof obj === "object") {
+        Object.entries(obj).forEach(([k, v]) => {
+          html += `<tr><td>${k}</td><td>${v}</td></tr>`;
+        });
+      } else {
+        // Fallback : supposer chaque ligne "Indicateur: valeur"
+        content.split(/\n|,|;/).forEach(line => {
+          const parts = line.split(":");
+          if (parts.length >= 2) {
+            html += `<tr><td>${parts[0].trim()}</td><td>${parts.slice(1).join(":").trim()}</td></tr>`;
+          }
+        });
+      }
+
+      html += "</tbody></table>";
+      resultsDiv.innerHTML = html;
+    }
+
+    analyzeBtn.addEventListener("click", async () => {
+      resultsDiv.innerHTML = "<em>Analyse en cours...</em>";
+      const file = pdfInput.files[0];
+      const apiKey = apiKeyInput.value.trim();
+
+      if (!file) {
+        resultsDiv.innerHTML = "<p class='msg'>Veuillez sélectionner un PDF.</p>";
+        return;
+      }
+      if (!apiKey) {
+        resultsDiv.innerHTML = "<p class='msg'>Veuillez saisir votre clé API OpenAI.</p>";
+        return;
+      }
+
+      try {
+        const pdfText = await extractTextFromPDF(file);
+        const gptResponse = await analyzeFinancials(pdfText, apiKey);
+        displayResults(gptResponse);
+      } catch (err) {
+        console.error(err);
+        resultsDiv.innerHTML = `<p class='msg'>Erreur : ${err.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>

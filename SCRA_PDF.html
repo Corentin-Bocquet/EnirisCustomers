@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Télécharger les comptes annuels BNB</title>
+  <style>
+    body{font-family:system-ui, sans-serif;margin:2rem;max-width:900px}
+    h1{font-size:1.6rem;margin-bottom:1rem}
+    #log{white-space:pre-wrap;border:1px solid #ccc;padding:1rem;height:280px;overflow-y:auto;margin-top:1rem;font-size:.9rem;background:#fafafa}
+    button{padding:.6rem 1.2rem;margin-left:.8rem}
+  </style>
+</head>
+<body>
+<h1>Téléchargeur de comptes annuels (BNB) – 100 % navigateur</h1>
+<p>
+  1. Sélectionne ton fichier Excel.<br>
+  2. Clique « <strong>Lancer</strong> ». Le script lit la colonne <code>vat_clean</code> (ou toute cellule à 10 chiffres) et télécharge le <em>dernier</em> PDF pour chaque TVA.<br>
+  <strong>⚠️ Remarque CORS :</strong> le script passe par un <em>proxy CORS public</em> afin de contourner les restrictions du site de la BNB.<br>
+  Pour de gros volumes (&gt;200 TVA) prévois des pauses ou héberge ton propre proxy.
+</p>
+<input type="file" id="file" accept=".xlsx,.xls" />
+<button id="run" disabled>Lancer</button>
+<div id="log"></div>
+
+<!-- SheetJS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(() => {
+  const input = document.getElementById('file');
+  const runBtn = document.getElementById('run');
+  const logBox = document.getElementById('log');
+
+  const PROXY = 'https://cors.isomorphic-git.org/'; // proxy CORS qui accepte GET & POST
+
+  /** Petite fonction pratique de log */
+  function log(msg){
+    logBox.textContent += msg + "\n";
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  input.addEventListener('change', () => runBtn.disabled = !input.files.length);
+
+  runBtn.addEventListener('click', () => handleFile(input.files[0]));
+
+  async function handleFile(file){
+    runBtn.disabled = true;
+    logBox.textContent = '';
+
+    const arrayBuf = await file.arrayBuffer();
+    const wb = XLSX.read(arrayBuf, {type:'array'});
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header:1});
+
+    // Récupère l'index de colonne "vat_clean" si présent
+    const header = rows[0].map(h => String(h || '').toLowerCase());
+    const colIndex = header.indexOf('vat_clean');
+
+    // Construit la liste des TVA (10 chiffres) depuis la colonne repérée ou toutes colonnes
+    const tvas = [];
+    rows.slice(1).forEach(row => {
+      let raw = colIndex >=0 ? row[colIndex] : row.find(c => /\d{10}/.test(String(c)));
+      if(!raw) return; // aucune valeur trouvée
+      let vat = String(raw).replace(/\D/g,'');
+      if(vat.length === 9) vat = '0'+vat; // ajoute le 0 manquant
+      if(vat.length === 10) tvas.push(vat);
+      else log('Numéro ignoré (format invalide) : '+raw);
+    });
+
+    if(!tvas.length){
+      log('❌ Aucun numéro de TVA valide trouvé.');
+      runBtn.disabled = false;
+      return;
+    }
+
+    log(`== Début du traitement de ${tvas.length} entreprises ==`);
+
+    for(const vat of tvas){
+      try{
+        await processVat(vat);
+      }catch(err){
+        log(`❌ Erreur pour ${vat} : ${err.message}`);
+      }
+    }
+
+    log('== Opération terminée ==');
+    runBtn.disabled = false;
+  }
+
+  /** Traitement complet pour un seul n° TVA */
+  async function processVat(vat){
+    log(`Recherche de la société n° ${vat} ...`);
+
+    // 1) charge la page de recherche
+    const searchURL = 'https://cri.nbb.be/bc9/web/catalog?lang=F';
+    const searchHTML = await (await proxiedFetch(searchURL)).text();
+
+    // Parse pour récupérer ViewState & action (avec jsessionId)
+    const parser = new DOMParser();
+    const doc1 = parser.parseFromString(searchHTML,'text/html');
+    const form = doc1.querySelector('#page_searchForm');
+    if(!form) throw new Error('formulaire non trouvé');
+    const actionURL = new URL(form.getAttribute('action'), searchURL).href;
+    const viewState = doc1.querySelector("input[name='javax.faces.ViewState']").value;
+    const numFieldName = doc1.querySelector("input[id$='generated_number_2_component']").name;
+
+    // 2) construit la requête POST AJAX
+    const params = new URLSearchParams({
+      'javax.faces.partial.ajax':'true',
+      'javax.faces.source':'page_searchForm:actions:0:button',
+      'javax.faces.partial.execute':'page_searchForm',
+      'javax.faces.partial.render':'page_searchForm page_listForm pageMessagesId',
+      'page_searchForm:actions:0:button':'page_searchForm:actions:0:button',
+      'page_searchForm':'page_searchForm',
+      [numFieldName]:vat,
+      'page_searchForm:j_id3_activeIndex':'0',
+      'page_searchForm:j_id2_stateholder':'panel_param_visible;',
+      'page_searchForm:j_idt133_stateholder':'panel_param_visible;',
+      'javax.faces.ViewState':viewState
+    });
+
+    const ajaxRes = await proxiedFetch(actionURL, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/x-www-form-urlencoded',
+        'Faces-Request':'partial/ajax',
+        'X-Requested-With':'XMLHttpRequest'
+      },
+      body:params.toString()
+    });
+
+    const xmlText = await ajaxRes.text();
+    const redirect = /<redirect url="([^"]+)/.exec(xmlText)?.[1];
+    if(!redirect) throw new Error('redirection manquante');
+    const resultsURL = new URL(redirect, actionURL).href;
+
+    // 3) charge la page de résultats
+    const resHTML = await (await proxiedFetch(resultsURL)).text();
+    const doc3 = parser.parseFromString(resHTML,'text/html');
+    const company = (doc3.querySelector('.company-details tr:nth-child(2) td:nth-child(2)')?.textContent||'Entreprise_'+vat).trim();
+
+    const pdfAnchor = doc3.querySelector("table[id$='accountsTable_data'] a[href*='.pdf']");
+    if(!pdfAnchor) throw new Error('PDF introuvable');
+    const pdfURL = new URL(pdfAnchor.getAttribute('href'), resultsURL).href;
+
+    // 4) télécharge le PDF (blob) via proxy également
+    const pdfBlob = await (await proxiedFetch(pdfURL)).blob();
+    const fileName = company.replace(/[^A-Za-z0-9._-]/g,'_').slice(0,100)+'.pdf';
+    downloadBlob(pdfBlob, fileName);
+    log(`✅ Téléchargé : ${fileName}`);
+  }
+
+  /** fetch via proxy CORS (GET ou POST) */
+  function proxiedFetch(url, options={}){
+    // cors proxy accepte toutes méthodes, on lui passe complete URL en param "?url="
+    const proxied = PROXY + encodeURIComponent(url);
+    return fetch(proxied, options);
+  }
+
+  /** déclenche un téléchargement local */
+  function downloadBlob(blob, filename){
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }
+})();
+</script>
+</body>
+</html>
